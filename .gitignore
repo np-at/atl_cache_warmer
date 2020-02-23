@@ -1,3 +1,8 @@
+build
+dist
+.idea
+atl_cache_warmer.egg-info
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
