@@ -1,4 +1,10 @@
+from os import path
+
 import setuptools
+
+this_directory = path.abspath(path.dirname(__file__))
+with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+    long_descr = f.read()
 
 setuptools.setup(
     name='atl_cache_warmer',
@@ -10,9 +16,12 @@ setuptools.setup(
         ]
     },
     url='',
-    license='',
+    long_description=long_descr,
+    long_description_content_type='text/markdown',
+    license='MIT',
     author='np-at',
     author_email='',
-    description='',
-    install_requires=['requests']
+    description='Little script to warm up confluence and jira caches to make it more responsive',
+    install_requires=['requests'],
+    python_requires='>=3.6'
 )
