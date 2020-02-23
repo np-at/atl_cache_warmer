@@ -1,3 +1,4 @@
+import logging
 import sys
 from argparse import ArgumentParser, Namespace
 
@@ -40,6 +41,7 @@ def create_arg_parser() -> ArgumentParser:
                         default=None)
     parser.add_argument('-v',
                         dest="verbosity",
+                        help="Increase verbosity level, can used up to 2 times",
                         action="count",
                         default=0)
 
@@ -49,34 +51,36 @@ def create_arg_parser() -> ArgumentParser:
 def main():
     arg_parser = create_arg_parser()
     parsed_args: Namespace = arg_parser.parse_args(sys.argv[1:])
-
+    log_level = logging.ERROR
+    if parsed_args.verbosity == 0:
+        log_level = logging.WARNING
+    elif parsed_args.verbosity == 1:
+        log_level = logging.INFO
+    elif parsed_args.verbosity == 2:
+        log_level = logging.DEBUG
+    logging.basicConfig(
+        level=log_level
+    )
     if parsed_args.confluence_url is not None:
         try:
-            dm: bool = False
-            if parsed_args.verbosity > 0:
-                dm = True
             c = ConfluenceSite(confluence_url=parsed_args.confluence_url,
                                confluence_username=parsed_args.username,
                                confluence_password=parsed_args.password,
-                               confluence_target_space=parsed_args.space,
-                               debug_mode=dm)
+                               confluence_target_space=parsed_args.space
+                               )
             c.run()
         except Exception as ex:
-            print(ex)
+            logging.error(ex)
             pass
 
     if parsed_args.jira_url is not None:
 
         try:
-            dm: bool = False
-            if parsed_args.verbosity > 0:
-                dm = True
             j = JiraSite(jira_url=parsed_args.jira_url,
                          jira_username=parsed_args.username,
                          jira_password=parsed_args.password,
-                         debug_mode=dm,
                          jira_destination=parsed_args.jira_target)
             j.run()
         except Exception as ex:
-            print(ex)
+            logging.error(ex)
             pass

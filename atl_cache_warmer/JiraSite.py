@@ -1,11 +1,12 @@
+import logging
+
 import requests
 
 
 class JiraSite(object):
-    def __init__(self, jira_url: str, jira_username: str, jira_password: str, debug_mode: bool = False,
+    def __init__(self, jira_url: str, jira_username: str, jira_password: str,
                  jira_destination: str = None):
         self.jira_destination = jira_destination
-        self.debug_mode = debug_mode
         self.jira_url = jira_url.rstrip('/')
         self.jira_username = jira_username
         self.jira_password = jira_password
@@ -14,7 +15,7 @@ class JiraSite(object):
         try:
             self.login()
         except Exception as ex:
-            print(ex)
+            logging.error(ex)
             pass
 
     def run(self):
@@ -22,6 +23,7 @@ class JiraSite(object):
 
     def login(self):
         url = f"{self.jira_url}/login.jsp"
+        logging.info(f"attempting login to Jira using url: {url} ")
 
         payload = f'atl_token=&login=Log%20In&os_destination={self.jira_destination}&os_password={self.jira_password}&os_username={self.jira_username}&user_role='
         headers = {
@@ -35,7 +37,6 @@ class JiraSite(object):
         }
 
         response = self.session.request("POST", url, headers=headers, data=payload)
-        if self.debug_mode:
-            print(response.text.encode('utf8'))
+        logging.debug(response.text.encode('utf8'))
         # if response.status_code != 302:
         #     raise AuthenticationException()
