@@ -2,11 +2,12 @@ import logging
 
 import requests
 
+from atl_cache_warmer._utils import AtlNavigation
+
 
 class ConfluenceSite(object):
     def __init__(self, confluence_url: str, confluence_username: str, confluence_password: str,
-                 confluence_target_space: str
-                 ):
+                 confluence_target_space: str, iterate: bool = False):
         self.confluence_url = confluence_url.rstrip('/')
         self.confluence_username = confluence_username
         self.confluence_password = confluence_password
@@ -17,12 +18,28 @@ class ConfluenceSite(object):
         self.cookies = None
         self.session = requests.session()
         self.login()
+        self.iterate_space = iterate
 
     def run(self):
-        response = self.session.request(method="GET",
-                                        url=f'{self.confluence_url}/display/{self.confluence_target_space}',
-                                        cookies=self.session.cookies)
-        logging.debug(response.text.encode('utf8'))
+        if self.iterate_space is False:
+            response = self.session.request(method="GET",
+                                            url=f'{self.confluence_url}/display/{self.confluence_target_space}',
+                                            cookies=self.session.cookies)
+            logging.debug(response.text.encode('utf8'))
+        else:
+            try:
+                pages = self.get_pages_in_space()
+            except Exception as ex:
+                logging.exception(ex)
+                raise ex
+
+            for page in pages:
+                try:
+                    response = self.session.request(method="GET", url=page)
+                    logging.debug(response.text.encode('utf8'))
+                except Exception as ex:
+                    logging.exception(ex)
+            logging.info(f"finished running through pages in {self.confluence_target_space}")
 
     def login(self):
         url = f"{self.confluence_url}/dologin.action"
@@ -45,3 +62,30 @@ class ConfluenceSite(object):
         logging.debug(response.cookies)
         # if response.status_code != 302:
         #     raise AuthenticationException()
+
+    def get_pages_in_space(self):
+        if self.confluence_target_space is None:
+            return
+        url = f"{self.confluence_url}/rest/api/content"
+        parameters = {
+            "spaceKey": f"{self.confluence_target_space}"
+        }
+
+        try:
+            response = self.session.request("GET", url=url, params=parameters)
+        except Exception as ex:
+            logging.exception(ex)
+            raise ex
+
+        try:
+            j = AtlNavigation(self.session, response.json())
+        except Exception as ex:
+            logging.exception(ex)
+            raise ex
+        try:
+            flat = j.flatten_web_ui_list()
+        except Exception as ex:
+            logging.exception(ex)
+            raise ex
+
+        return flat

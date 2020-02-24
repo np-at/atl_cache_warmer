@@ -39,6 +39,11 @@ def create_arg_parser() -> ArgumentParser:
                         help="confluence space to make request to",
                         type=str,
                         default=None)
+    parser.add_argument('-i',
+                        dest="iterate",
+                        help="when used in combination with -s, will attempt to iterate through and request all pages "
+                             "in the target space.  Jira support coming soon(TM)",
+                        action="store_true")
     parser.add_argument('-v',
                         dest="verbosity",
                         help="Increase verbosity level, can used up to 2 times",
@@ -63,11 +68,17 @@ def main():
     )
     if parsed_args.confluence_url is not None:
         try:
-            c = ConfluenceSite(confluence_url=parsed_args.confluence_url,
-                               confluence_username=parsed_args.username,
-                               confluence_password=parsed_args.password,
-                               confluence_target_space=parsed_args.space
-                               )
+            try:
+                c = ConfluenceSite(confluence_url=parsed_args.confluence_url,
+                                   confluence_username=parsed_args.username,
+                                   confluence_password=parsed_args.password,
+                                   confluence_target_space=parsed_args.space,
+                                   iterate=parsed_args.iterate
+                                   )
+            except Exception as ex:
+                logging.exception(ex)
+                sys.exit(1)
+
             c.run()
         except Exception as ex:
             logging.error(ex)
@@ -79,7 +90,8 @@ def main():
             j = JiraSite(jira_url=parsed_args.jira_url,
                          jira_username=parsed_args.username,
                          jira_password=parsed_args.password,
-                         jira_destination=parsed_args.jira_target)
+                         jira_destination=parsed_args.jira_target,
+                         iterate=parsed_args.iterate)
             j.run()
         except Exception as ex:
             logging.error(ex)

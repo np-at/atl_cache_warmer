@@ -4,13 +4,16 @@ import requests
 
 
 class JiraSite(object):
-    def __init__(self, jira_url: str, jira_username: str, jira_password: str,
-                 jira_destination: str = None):
+    def __init__(self, jira_url: str, jira_username: str, jira_password: str, jira_destination: str = None,
+                 iterate: bool = False):
         self.jira_destination = jira_destination
         self.jira_url = jira_url.rstrip('/')
         self.jira_username = jira_username
         self.jira_password = jira_password
         self.session = requests.session()
+
+        # TODO: implement project iteration
+        self.iterate_project = iterate
 
         try:
             self.login()
