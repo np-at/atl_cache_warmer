@@ -12,10 +12,12 @@ class ConfluenceSite(object):
         self.confluence_url = confluence_url.rstrip('/')
         self.confluence_username = confluence_username
         self.confluence_password = confluence_password
+        self.confluence_target_spaces: list = list()
         if confluence_target_space is not None:
-            self.confluence_target_space = confluence_target_space.lstrip('/')
+            for s in confluence_target_space:
+                self.confluence_target_spaces.append(s.lstrip('/'))
         else:
-            self.confluence_target_space = None
+            self.confluence_target_spaces = None
         self.cookies = None
         self.session = requests.session()
         self.login()
@@ -24,11 +26,14 @@ class ConfluenceSite(object):
     def run(self):
         if self.iterate_space is False:
             response = self.session.request(method="GET",
-                                            url=f'{self.confluence_url}/display/{self.confluence_target_space}',
+                                            url=f'{self.confluence_url}/display/{self.confluence_target_spaces}',
                                             cookies=self.session.cookies)
             logging.debug(response.text.encode('utf8'))
         else:
+
             try:
+                if self.iterate_space and not self.confluence_target_spaces:
+                    self.get_spaces_in_site()
                 pages = self.get_pages_in_space()
             except Exception as ex:
                 logging.exception(ex)
@@ -40,7 +45,7 @@ class ConfluenceSite(object):
                     logging.debug(response.text.encode('utf8'))
                 except Exception as ex:
                     logging.exception(ex)
-            logging.info(f"finished running through pages in {self.confluence_target_space}")
+            logging.info(f"finished running through pages in {self.confluence_target_spaces}")
         if self.additional_urls is not None:
             for u in self.additional_urls:
                 try:
@@ -50,6 +55,7 @@ class ConfluenceSite(object):
                     logging.debug(response.text.encode('utf8'))
                 except Exception as ex:
                     logging.exception(ex)
+
     def login(self):
         url = f"{self.confluence_url}/dologin.action"
         logging.info(f"attempting login to Confluence using url: {url} ")
@@ -72,29 +78,45 @@ class ConfluenceSite(object):
         # if response.status_code != 302:
         #     raise AuthenticationException()
 
-    def get_pages_in_space(self):
-        if self.confluence_target_space is None:
-            return
-        url = f"{self.confluence_url}/rest/api/content"
-        parameters = {
-            "spaceKey": f"{self.confluence_target_space}"
-        }
-
+    def get_spaces_in_site(self):
+        url = f"{self.confluence_url}/rest/api/space"
         try:
-            response = self.session.request("GET", url=url, params=parameters)
+            response = self.session.request("GET",
+                                            url=url,
+                                            )
         except Exception as ex:
             logging.exception(ex)
-            raise ex
+        else:
+            a = AtlNavigation(self.session, response.json())
+            self.confluence_target_spaces = a.collect_results(property_selector='key')
 
-        try:
-            j = AtlNavigation(self.session, response.json())
-        except Exception as ex:
-            logging.exception(ex)
-            raise ex
-        try:
-            flat = j.flatten_web_ui_list()
-        except Exception as ex:
-            logging.exception(ex)
-            raise ex
+    def get_pages_in_space(self) -> list:
+        if self.confluence_target_spaces is None:
+            raise TypeError
+        pages = list()
+        for space in self.confluence_target_spaces:
+            url = f"{self.confluence_url}/rest/api/content"
+            parameters = {
+                "spaceKey": f"{space}"
+            }
 
-        return flat
+            try:
+                response = self.session.request("GET", url=url, params=parameters)
+
+            except Exception as ex:
+                logging.exception(ex)
+                raise ex
+
+            try:
+                j = AtlNavigation(self.session, response.json())
+            except Exception as ex:
+                logging.exception(ex)
+                raise ex
+            try:
+                flat = j.flatten_web_ui_list()
+            except Exception as ex:
+                logging.exception(ex)
+                raise ex
+
+            pages.extend(flat)
+        return pages

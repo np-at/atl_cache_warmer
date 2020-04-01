@@ -52,10 +52,16 @@ class AtlNavigation(object):
     def next_page(self):
         if self.current_response["size"] < self.current_response["limit"]:
             raise StopIteration()
-        r = self.session.request("GET", f"{self.base}{self.next}")
+        elif self.next is None:
+            raise StopIteration()
+        try:
+            r = self.session.request("GET", f"{self.base}{self.next}")
+        except Exception as ex:
+            logging.exception(ex)
+            raise
         self._setup_response(r.json())
 
-    def collect_results(self):
+    def collect_results(self, property_selector=None):
         while True:
             try:
                 self.next_page()
@@ -63,6 +69,8 @@ class AtlNavigation(object):
                 break
             except Exception as ex:
                 logging.error(ex)
+        if property_selector is not None:
+            return list(map(lambda x: x[property_selector], self.results))
 
     def flatten_web_ui_list(self, func_selector=None):
         try:

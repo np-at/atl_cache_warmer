@@ -25,9 +25,8 @@ def create_arg_parser() -> ArgumentParser:
                         default=None)
     parser.add_argument('-t',
                         dest="jira_target",
-                        type=str,
                         help="path in jira to make request to",
-                        default=None
+                        action='append'
                         )
     parser.add_argument('-c',
                         dest='confluence_url',
@@ -37,17 +36,19 @@ def create_arg_parser() -> ArgumentParser:
     parser.add_argument('-s',
                         dest="space",
                         help="confluence space to make request to",
-                        type=str,
-                        default=None)
+
+                        action='append')
     parser.add_argument('-i',
                         dest="iterate",
                         help="when used in combination with -s, will attempt to iterate through and request all pages "
-                             "in the target space.  Jira support coming soon(TM)",
+                             "in the target space.  If no space specificied will attempt to go through every space in "
+                             "the site  Jira support coming soon(TM)",
                         action="store_true")
     parser.add_argument('--aj',
                         dest="additional_jira",
                         action='append',
-                        help="add additional urls to call using the same session as jira (To take advantage of the session authentication).  use once per additional url",
+                        help="add additional urls to call using the same session as jira (To take advantage of the "
+                             "session authentication).  use once per additional url",
                         )
     parser.add_argument('--ac',
                         dest="additional_confluence",
