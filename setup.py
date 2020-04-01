@@ -8,7 +8,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setuptools.setup(
     name='atl_cache_warmer',
-    version='0.13',
+    version='0.13.1',
     packages=['atl_cache_warmer'],
     entry_points={
         'console_scripts': [
