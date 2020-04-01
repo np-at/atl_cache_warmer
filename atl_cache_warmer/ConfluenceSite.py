@@ -7,7 +7,8 @@ from atl_cache_warmer._utils import AtlNavigation
 
 class ConfluenceSite(object):
     def __init__(self, confluence_url: str, confluence_username: str, confluence_password: str,
-                 confluence_target_space: str, iterate: bool = False):
+                 confluence_target_space: str, iterate: bool = False, additional_urls: list = None):
+        self.additional_urls = additional_urls
         self.confluence_url = confluence_url.rstrip('/')
         self.confluence_username = confluence_username
         self.confluence_password = confluence_password
@@ -40,7 +41,15 @@ class ConfluenceSite(object):
                 except Exception as ex:
                     logging.exception(ex)
             logging.info(f"finished running through pages in {self.confluence_target_space}")
-
+        if self.additional_urls is not None:
+            for u in self.additional_urls:
+                try:
+                    response = self.session.request(method="GET",
+                                                    url=u,
+                                                    cookies=self.session.cookies)
+                    logging.debug(response.text.encode('utf8'))
+                except Exception as ex:
+                    logging.exception(ex)
     def login(self):
         url = f"{self.confluence_url}/dologin.action"
         logging.info(f"attempting login to Confluence using url: {url} ")

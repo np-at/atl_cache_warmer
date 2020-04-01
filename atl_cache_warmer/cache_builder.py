@@ -44,6 +44,16 @@ def create_arg_parser() -> ArgumentParser:
                         help="when used in combination with -s, will attempt to iterate through and request all pages "
                              "in the target space.  Jira support coming soon(TM)",
                         action="store_true")
+    parser.add_argument('--aj',
+                        dest="additional_jira",
+                        action='append',
+                        help="add additional urls to call using the same session as jira (To take advantage of the session authentication).  use once per additional url",
+                        )
+    parser.add_argument('--ac',
+                        dest="additional_confluence",
+                        action='append',
+                        help="add additional urls to call using the same session as confluence (To take advantage of the session authentication).  use once per additional url",
+                        )
     parser.add_argument('-v',
                         dest="verbosity",
                         help="Increase verbosity level, can used up to 2 times",
@@ -73,7 +83,8 @@ def main():
                                    confluence_username=parsed_args.username,
                                    confluence_password=parsed_args.password,
                                    confluence_target_space=parsed_args.space,
-                                   iterate=parsed_args.iterate
+                                   iterate=parsed_args.iterate,
+                                   additional_urls=parsed_args.additional_confluence
                                    )
             except Exception as ex:
                 logging.exception(ex)
@@ -91,7 +102,8 @@ def main():
                          jira_username=parsed_args.username,
                          jira_password=parsed_args.password,
                          jira_destination=parsed_args.jira_target,
-                         iterate=parsed_args.iterate)
+                         iterate=parsed_args.iterate,
+                         additional_urls=parsed_args.additional_jira)
             j.run()
         except Exception as ex:
             logging.error(ex)

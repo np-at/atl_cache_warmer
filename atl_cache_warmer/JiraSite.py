@@ -5,7 +5,8 @@ import requests
 
 class JiraSite(object):
     def __init__(self, jira_url: str, jira_username: str, jira_password: str, jira_destination: str = None,
-                 iterate: bool = False):
+                 iterate: bool = False, additional_urls: list = None):
+        self.additional_urls = additional_urls
         self.jira_destination = jira_destination
         self.jira_url = jira_url.rstrip('/')
         self.jira_username = jira_username
@@ -23,6 +24,18 @@ class JiraSite(object):
 
     def run(self):
         self.session.request(method="GET", url=f'{self.jira_url}/{self.jira_destination}')
+        if self.iterate_project:
+            print("Not implemented yet.  Sorry!")
+        if self.additional_urls is not None:
+            for u in self.additional_urls:
+                try:
+                    logging.debug(f"starting request for additional url {u}")
+                    response = self.session.request(method="GET",
+                                                    url=u,
+                                                    cookies=self.session.cookies)
+                    logging.debug(response.text.encode('utf8'))
+                except Exception as ex:
+                    logging.exception(ex)
 
     def login(self):
         url = f"{self.jira_url}/login.jsp"
