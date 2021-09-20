@@ -20,7 +20,7 @@ class JiraSite(object):
             self.login()
         except Exception as ex:
             logging.error(ex)
-            pass
+
 
     def run(self):
         if self.jira_destination is not None:
@@ -56,5 +56,4 @@ class JiraSite(object):
 
         response = self.session.request("POST", url, headers=headers, data=payload)
         logging.debug(response.text.encode('utf8'))
-        # if response.status_code != 302:
-        #     raise AuthenticationException()
+
